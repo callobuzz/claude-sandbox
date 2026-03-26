@@ -369,11 +369,17 @@ Run `claude` on your host machine (outside the sandbox) to refresh your token. T
 ## Contributing
 
 ```bash
-git clone https://github.com/anthropics/claude-sandbox.git
+git clone https://github.com/callobuzz/claude-sandbox.git
 cd claude-sandbox
 npm link        # install globally for development
 claude-sandbox status  # verify it works
 ```
+
+---
+
+## About
+
+Built by [Call O Buzz Services](https://callobuzz.com) — AI-driven software development, SaaS solutions, and open source tools.
 
 ---
 
