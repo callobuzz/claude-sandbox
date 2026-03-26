@@ -1,6 +1,11 @@
 #!/usr/bin/env node
 
-import { resolve } from "node:path";
+import { resolve, dirname, join } from "node:path";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const pkg = JSON.parse(readFileSync(join(__dirname, "..", "package.json"), "utf-8"));
 import {
   checkSandboxAvailable,
   listSandboxes,
@@ -52,6 +57,7 @@ ${CYAN}Options:${RESET}
   -p, --prompt <text>    Initial prompt for Claude
   -n, --name <name>      Custom sandbox name
   --no-auth              Skip credential injection
+  -v, --version          Show version
   -h, --help             Show this help
 
 ${CYAN}Examples:${RESET}
@@ -100,7 +106,9 @@ function parseArgs(argv) {
   let i = 0;
   while (i < args.length) {
     const arg = args[i];
-    if (arg === "-h" || arg === "--help") {
+    if (arg === "-v" || arg === "--version") {
+      parsed.command = "version";
+    } else if (arg === "-h" || arg === "--help") {
       parsed.help = true;
     } else if (arg === "-p" || arg === "--prompt") {
       parsed.prompt = args[++i];
@@ -261,6 +269,11 @@ function cmdStatus() {
 
 // --- Main ---
 const opts = parseArgs(process.argv);
+
+if (opts.command === "version") {
+  console.log(`claude-sandbox v${pkg.version}`);
+  process.exit(0);
+}
 
 if (opts.help) {
   printHelp();
