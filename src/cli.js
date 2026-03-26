@@ -134,13 +134,14 @@ async function cmdRun(opts) {
   const projectDir = toDockerPath(resolve(opts.projectDir));
   const sandboxName = opts.name || getSandboxName(opts.projectDir);
 
+  console.log();
   log(`Project:  ${projectDir}`);
   log(`Sandbox:  ${sandboxName}`);
 
   // Check if sandbox already exists
   if (sandboxExists(sandboxName)) {
-    warn(`Sandbox '${sandboxName}' already exists.`);
-    info("Resuming existing sandbox...");
+    info("Sandbox exists. Resuming...");
+    console.log();
     const agentArgs = ["--dangerously-skip-permissions"];
     if (opts.prompt) {
       agentArgs.unshift("-p", opts.prompt);
@@ -160,53 +161,61 @@ async function cmdRun(opts) {
 
     const sub = getSubscriptionInfo();
     if (sub) {
-      log(`Auth: ${sub.type} subscription (${sub.tier})`);
+      log(`Auth:     ${sub.type} (${sub.tier})`);
     }
   } else if (!opts.noAuth) {
     warn("No ~/.claude found. Claude will need browser login.");
   }
 
-  // Step 1: Create sandbox
-  log("Creating sandbox...");
+  console.log();
+
+  // Step 1: Create sandbox (shows Docker pull progress via inherited stdio)
+  log(`${CYAN}[1/4]${RESET} Creating sandbox microVM...`);
   try {
     createSandbox(sandboxName, projectDir, extraWorkspaces);
   } catch (err) {
     error(`Failed to create sandbox: ${err.message}`);
     process.exit(1);
   }
+  log(`${GREEN}[1/4]${RESET} Sandbox created.`);
 
   // Step 2: Set up auth and config
+  log(`${CYAN}[2/4]${RESET} Linking credentials, settings, skills, plugins...`);
   if (claudeHome && !opts.noAuth) {
-    log("Setting up auth and config...");
     const mountedPath = toSandboxMountPath(toDockerPath(claudeHome));
     const ok = setupAuth(sandboxName, mountedPath);
-    if (!ok) {
-      warn("Could not set up auth. Claude may ask for browser login.");
+    if (ok) {
+      log(`${GREEN}[2/4]${RESET} Auth configured. No browser login needed.`);
+    } else {
+      warn(`[2/4] Could not set up auth. Claude may ask for browser login.`);
     }
+  } else {
+    log(`${DIM}[2/4] Skipped (no host config found).${RESET}`);
   }
 
-  // Step 3: Verify everything before launching Claude
-  log("Verifying sandbox state...");
+  // Step 3: Verify
+  log(`${CYAN}[3/4]${RESET} Verifying sandbox state...`);
   const verifyResult = execInSandbox(
     sandboxName,
     [
-      'echo "credentials: $([ -f /home/agent/.claude/.credentials.json ] && echo OK || echo MISSING)"',
-      'echo "claude.json: $([ -f /home/agent/.claude.json ] && echo OK || echo MISSING)"',
-      'echo "settings: $([ -f /home/agent/.claude/settings.json ] && echo OK || echo MISSING)"',
-      'echo "session-env: $([ -d /home/agent/.claude/session-env ] && touch /home/agent/.claude/session-env/.test 2>/dev/null && rm -f /home/agent/.claude/session-env/.test && echo WRITABLE || echo READ-ONLY)"',
+      '[ -f /home/agent/.claude/.credentials.json ] && c="OK" || c="MISSING"',
+      '[ -f /home/agent/.claude.json ] && j="OK" || j="MISSING"',
+      '[ -f /home/agent/.claude/settings.json ] && s="OK" || s="MISSING"',
+      'touch /home/agent/.claude/session-env/.test 2>/dev/null && rm -f /home/agent/.claude/session-env/.test && w="WRITABLE" || w="READ-ONLY"',
+      'echo "$c|$j|$s|$w"',
     ].join(" && ")
   );
-  // Print verification results
-  for (const line of verifyResult.stdout.trim().split("\n")) {
-    if (line.includes("MISSING") || line.includes("NONE")) {
-      warn(`  ${line}`);
-    } else {
-      log(`  ${line}`);
-    }
+  const parts = verifyResult.stdout.trim().split("|");
+  const allOk = parts.every((p) => p === "OK" || p === "WRITABLE");
+  if (allOk) {
+    log(`${GREEN}[3/4]${RESET} All checks passed: credentials, config, settings, writable dirs.`);
+  } else {
+    warn(`[3/4] Checks: credentials=${parts[0]} config=${parts[1]} settings=${parts[2]} session-env=${parts[3]}`);
   }
 
-  // Step 4: Run Claude
-  log("Launching Claude...");
+  // Step 4: Launch
+  log(`${CYAN}[4/4]${RESET} Launching Claude...`);
+  console.log();
   const agentArgs = ["--dangerously-skip-permissions"];
   if (opts.prompt) {
     agentArgs.unshift("-p", opts.prompt);

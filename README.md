@@ -91,19 +91,21 @@ claude-sandbox --help                       # full usage info
 ### First run
 
 ```
-$ claude-sandbox /path/to/my-api
+$ cd my-api
+$ claude-sandbox
 
 [claude-sandbox] Project:  C:\Projects\my-api
 [claude-sandbox] Sandbox:  claude-sandbox-my-api
-[claude-sandbox] Auth: max subscription (default_claude_max_20x)
-[claude-sandbox] Creating sandbox...
-[claude-sandbox] Setting up auth and config...
-[claude-sandbox] Verifying sandbox state...
-[claude-sandbox]   credentials: OK
-[claude-sandbox]   claude.json: OK
-[claude-sandbox]   settings: OK
-[claude-sandbox]   session-env: WRITABLE
-[claude-sandbox] Launching Claude...
+[claude-sandbox] Auth:     max (default_claude_max_20x)
+
+[claude-sandbox] [1/4] Creating sandbox microVM...
+✓ Created sandbox claude-sandbox-my-api in VM claude-sandbox-my-api
+[claude-sandbox] [1/4] Sandbox created.
+[claude-sandbox] [2/4] Linking credentials, settings, skills, plugins...
+[claude-sandbox] [2/4] Auth configured. No browser login needed.
+[claude-sandbox] [3/4] Verifying sandbox state...
+[claude-sandbox] [3/4] All checks passed: credentials, config, settings, writable dirs.
+[claude-sandbox] [4/4] Launching Claude...
 
 ╭─── Claude Code ─────────────────────────────────╮
 │          Welcome back!                          │
@@ -118,8 +120,7 @@ $ claude-sandbox
 
 [claude-sandbox] Project:  C:\Projects\my-api
 [claude-sandbox] Sandbox:  claude-sandbox-my-api
-[claude-sandbox] Sandbox 'claude-sandbox-my-api' already exists.
-[claude-sandbox] Resuming existing sandbox...
+[claude-sandbox] Sandbox exists. Resuming...
 ```
 
 ### Status check
@@ -217,18 +218,118 @@ Configuration is automatic. `claude-sandbox` detects your existing Claude Code s
 
 ## Setup & Prerequisites
 
-### Auto-detection
-
-`claude-sandbox` checks prerequisites on every run. If something is missing, it shows platform-specific install instructions.
+`claude-sandbox` checks prerequisites on every run. If something is missing, it shows platform-specific install instructions automatically. But here's the full setup if you want to do it manually.
 
 ### Requirements
 
-| Requirement | Version | Notes |
-|-------------|---------|-------|
-| Node.js | >= 18 | For the CLI |
-| Docker | >= 29.x | With Docker Desktop |
-| Docker Sandbox | >= 0.12 | Comes with Docker Desktop 4.40+ |
-| Claude Code | Any | Must be authenticated on host (`claude` CLI) |
+| Requirement | Version | Required? | Notes |
+|-------------|---------|-----------|-------|
+| Node.js | >= 18 | Yes | For the CLI (`npm install -g claude-sandbox`) |
+| Docker Desktop | >= 4.40 | Yes | Provides Docker Engine + Docker Sandbox |
+| Docker Sandbox | >= 0.12 | Yes | Built into Docker Desktop 4.40+. This is the `docker sandbox` command. |
+| Claude Code CLI | Any | Yes | Must be installed and authenticated on your host machine |
+
+### Step-by-step setup
+
+#### 1. Install Node.js (if not installed)
+
+```bash
+# Windows (winget)
+winget install OpenJS.NodeJS.LTS
+
+# macOS (Homebrew)
+brew install node
+
+# Linux
+curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+sudo apt-get install -y nodejs
+```
+
+Verify: `node --version` should print `v18.x` or higher.
+
+#### 2. Install Docker Desktop
+
+Docker Desktop includes both Docker Engine and the Docker Sandbox plugin.
+
+```bash
+# Windows (winget)
+winget install Docker.DockerDesktop
+# Then restart your computer. WSL 2 is required — install with: wsl --install
+
+# macOS (Homebrew)
+brew install --cask docker
+# Then open Docker.app from Applications
+
+# Linux
+curl -fsSL https://get.docker.com | sh
+sudo usermod -aG docker $USER
+# Log out and back in, then install Docker Desktop for the Sandbox plugin
+# See: https://docs.docker.com/desktop/install/linux/
+```
+
+Verify: `docker version` should show Client and Server versions. `docker sandbox version` should print a version number.
+
+#### 3. Install and authenticate Claude Code
+
+```bash
+# Install Claude Code CLI
+npm install -g @anthropic-ai/claude-code
+
+# Authenticate (opens browser for OAuth login)
+claude
+
+# This creates ~/.claude/.credentials.json which claude-sandbox will use
+```
+
+Verify: `claude --version` should print a version. Running `claude` should open the interactive session without asking for login.
+
+#### 4. Install claude-sandbox
+
+```bash
+npm install -g claude-sandbox
+
+# Verify everything
+claude-sandbox status
+```
+
+You should see all green checkmarks:
+
+```
+Prerequisite Check
+
+  ✓ Docker (v29.x)
+  ✓ Docker daemon
+  ✓ Docker Sandbox
+  ✓ Claude Code CLI
+
+All prerequisites met. Ready to go.
+
+  Credentials:     found
+  Subscription:    max (default_claude_max_20x)
+  Claude home:     C:\Users\you\.claude
+```
+
+#### 5. Run it
+
+```bash
+cd your-project
+claude-sandbox
+```
+
+### Troubleshooting
+
+**`docker sandbox` command not found**
+- Update Docker Desktop to 4.40 or later. Docker Sandbox is a built-in plugin.
+
+**Claude asks for browser login inside sandbox**
+- Your host credentials may have expired. Run `claude` on your host to refresh, then restart the sandbox.
+
+**"Failed to create sandbox" error**
+- Make sure Docker Desktop is running (check system tray / menu bar).
+- On Windows, ensure WSL 2 is installed: `wsl --install`
+
+**Sandbox is slow to create the first time**
+- First run downloads the sandbox template image (~500MB). Subsequent runs reuse the cached image and are fast.
 
 ### Platform support
 

@@ -57,14 +57,14 @@ export function createSandbox(name, projectDir, extraWorkspaces = []) {
   for (const ws of extraWorkspaces) {
     args.push(ws);
   }
+  // stdio: inherit so user sees Docker pull progress, image download, etc.
   const result = spawnSync("docker", args, {
     encoding: "utf-8",
-    stdio: ["inherit", "pipe", "pipe"],
+    stdio: "inherit",
   });
   if (result.status !== 0) {
-    throw new Error(result.stderr || result.stdout || "Failed to create sandbox");
+    throw new Error("Failed to create sandbox");
   }
-  return result.stdout;
 }
 
 /**
