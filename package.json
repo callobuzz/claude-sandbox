@@ -32,10 +32,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/anthropics/claude-sandbox.git"
+    "url": "git+https://github.com/callobuzz/claude-sandbox.git"
   },
-  "homepage": "https://github.com/anthropics/claude-sandbox#readme",
+  "homepage": "https://github.com/callobuzz/claude-sandbox#readme",
   "bugs": {
-    "url": "https://github.com/anthropics/claude-sandbox/issues"
+    "url": "https://github.com/callobuzz/claude-sandbox/issues"
   }
 }
