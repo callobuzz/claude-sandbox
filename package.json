@@ -1,0 +1,41 @@
+{
+  "name": "claude-sandbox",
+  "version": "0.1.0",
+  "description": "Run Claude Code in Docker sandboxes with zero re-authentication. Mounts your existing credentials, skills, and plugins automatically.",
+  "type": "module",
+  "bin": {
+    "claude-sandbox": "./src/cli.js"
+  },
+  "files": [
+    "src/"
+  ],
+  "scripts": {
+    "start": "node src/cli.js",
+    "test": "node src/cli.js status"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "docker",
+    "sandbox",
+    "ai",
+    "agent",
+    "autonomous",
+    "microvm",
+    "isolation",
+    "devtools"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anthropics/claude-sandbox.git"
+  },
+  "homepage": "https://github.com/anthropics/claude-sandbox#readme",
+  "bugs": {
+    "url": "https://github.com/anthropics/claude-sandbox/issues"
+  }
+}
